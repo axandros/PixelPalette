@@ -11,7 +11,7 @@ void BitMapImage::WriteToFile(std::string fileToWrite)
 {
 	vector<unsigned char> fileBytes;
 
-	addPixelArray(fileBytes);
+	addPixelArray(fileBytes, true);
 	makeFileHeader(fileBytes);
 	makeDIBHeader(fileBytes);
 	setFileSize(fileBytes);
@@ -20,13 +20,14 @@ void BitMapImage::WriteToFile(std::string fileToWrite)
 
 	std::ofstream file;
 	file.open(fileToWrite.c_str(), std::ios_base::binary);
+	
 	if (file.is_open()) {
-
-		cout << dec << "Hex: " << 51 << "Dec: " << 0x51 << endl;
+		//cout << dec << "Hex: " << 51 << "Dec: " << 0x51 ;
 		file.write((char*)&fileBytes[0], fileBytes.size() * sizeof(char));
 		for (int i = 0; i < fileBytes.size(); i++) {
-			//file.write((char*)&fileBytes[i], sizeof(char));
-			cout << dec << i << ": " << hex << (int)fileBytes[i] << endl;
+			file.write((char*)&fileBytes[i], sizeof(char));
+			file.write((char*)&fileBytes[i], sizeof(char));
+			//cout << dec << i << ": " << hex << (int)fileBytes[i] << endl;
 		}
 		//cout << endl;
 		file.close();
@@ -57,7 +58,6 @@ bool BitMapImage::addColor(std::string hexCode, std::vector<BitMapImage::Pixel>&
 			pixelArray.push_back(pix);
 			ret = true;
 		}
-		
 	}
 	return ret;
 }
@@ -109,7 +109,7 @@ void BitMapImage::makeDIBHeader(std::vector<unsigned char>& bmp)
 	bmp[50] = 0x00; bmp[51] = 0x00; bmp[52] = 0x00; bmp[53] = 0x00;
 }
 
-void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp)
+void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 {
 	// BGR  - Its reversed from normal R-G-B
 	
@@ -121,25 +121,45 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp)
 	
 	int bytesPerRow = width * 3 + padding;
 
+	std::ofstream debugFile;
+	if (debug) {
+		cout << "opening debug file." << endl;
+		debugFile.open("PixelArrayDebug.txt", ofstream::app );
+		ofstream::iostate curState = debugFile.rdstate();
+		cout << "DebugState: " << ((curState==ofstream::goodbit)?"good":"bad") << endl;
+		cout << "File Opened: " << (debugFile.is_open() ? "open" : "closed") << endl;
+	}
+
 	cout << "ColorBytes: " << colorBytes << endl;
-	cout << "bytesPerRow: " << bytesPerRow << endl;
+	cout << "BytesPerRow: " << bytesPerRow << endl;
+	cout << "Width: " << width << endl;
 	
 	for (int y = 0; y < width; y++) {
 		cout << "Row: " << y << endl;
 		int rowOffset = offset + y * bytesPerRow;
 		for (int x = 0; x < width; x++) {
+			cout << "Column : " << x << endl;
 			
 			int pixel = width * y + x;
 			int bytePos = rowOffset + x * 3;
-			cout << "Pixel " << hex << (int)hexPixels[pixel].r 
-				<< hex << (int)hexPixels[pixel].g 
-				<< hex << (int)hexPixels[pixel].b << endl;
-			bmp[bytePos + 0] = hexPixels[pixel].b;
-			bmp[bytePos + 1] = hexPixels[pixel].g;
-			bmp[bytePos + 2] = hexPixels[pixel].r;
+			Pixel tempPix = hexPixels[pixel];
+			cout << "Pixel " << flush << hex << (int)tempPix.r 
+				<< hex << (int)tempPix.g
+				<< hex << (int)tempPix.b << endl;
+			bmp[bytePos + 0] = tempPix.b;
+			bmp[bytePos + 1] = tempPix.g;
+			bmp[bytePos + 2] = tempPix.r;
+			if (debugFile.is_open()) {
+				cout << "Debug file open." << endl;
+				debugFile.write((const char*)tempPix.b,sizeof(char));
+				debugFile.write((const char*)tempPix.g, sizeof(char));
+				debugFile.write((const char*)tempPix.r, sizeof(char));
+			}
+			
 		}
 		for (int p = 0; p < padding; p++) {
 			bmp[rowOffset + width * 3 + p] = 0x00;
+			if (debugFile.is_open()) { debugFile.write("00", sizeof(char)); }
 		}
 	}
 
@@ -162,6 +182,11 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp)
 	
 	// Padding for line one to make the number of pixels divisible by 4
 	//bmp[68] = 0x00; bmp[69] = 0x00;
+
+	if (debugFile.is_open()) { 
+		debugFile.close();
+		cout << "closing debug file." << endl;
+	}
 }
 
 unsigned char BitMapImage::getHex(string input) {
@@ -256,13 +281,17 @@ void BitMapImage::setFileColorsUsed(std::vector<unsigned char>& bmp)
 
 void BitMapImage::setColorArraySizeBytes()
 {
+	cout << "setColorArraySizeBytes: Start Populating hexPixels" << endl;
+	for (int i = 0; i < originalPixels.size(); i++) {
+		cout << "setColorArraySizeBytes: Adding " << originalPixels[i].toString() << " to hexPixels" << endl;
+		hexPixels.push_back(originalPixels[i]);
+	}
+
 	setImageWidth();
 	setImagePadding();
 	int spare = width * width - hexPixels.size();
 	hexPixels.clear();
-	for (int i = 0; i < originalPixels.size(); i++) {
-		hexPixels.push_back(originalPixels[i]);
-	}
+	
 	
 	for (int i = 0; i < spare; i++) {
 		addColor("ffffff", hexPixels);
@@ -272,12 +301,14 @@ void BitMapImage::setColorArraySizeBytes()
 
 void BitMapImage::setImageWidth()
 {
+	
+	cout << "setImageWidth| Hex Pixels Size: " << hexPixels.size() << endl;
 	double root = sqrt(hexPixels.size());
-	cout << "Root: " << root << endl;
+	cout << "setImageWidth| Root: " << root << endl;
 	float whole, fractional;
 	fractional = std::modf(root, &whole);
-	//cout << "fractional: " << fractional << endl;
-	//cout << "whole: " << whole << endl;
+	cout << "setImageWidth| fractional: " << fractional << endl;
+	cout << "setImageWidth| whole: " << whole << endl;
 	width = whole;
 	if (fractional != 0) { // If it isn't a root
 		width++;
@@ -364,5 +395,14 @@ bool BitMapImage::getHex(string input, unsigned char& output)
 		}
 	}
 	//cout << " | " << hex << (int)output << endl;
+	return ret;
+}
+
+string BitMapImage::Pixel::toString()
+{
+	string ret = "(" + to_string(r);
+	ret += ", " + to_string(g);
+	ret += ", " + to_string(b);
+	ret += ")";
 	return ret;
 }

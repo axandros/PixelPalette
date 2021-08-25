@@ -6,14 +6,14 @@ using namespace std;
 
 void writeTestFile();
 
-void main() {
+int main() {
     BitMapImage test = BitMapImage();
 
     test.addColor("ff0000"); test.addColor("00ff00"); test.addColor("0000ff");
     test.addColor("ffff00"); test.addColor("ff00ff"); test.addColor("00ffff");
     test.addColor("ffff00"); test.addColor("ff00ff"); test.addColor("00ffff");
     test.WriteToFile("test5.bmp");
-
+     return 0;
 }
 
 void writeTestFile() {
