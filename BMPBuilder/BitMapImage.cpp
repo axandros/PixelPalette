@@ -124,7 +124,7 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 	std::ofstream debugFile;
 	if (debug) {
 		cout << "opening debug file." << endl;
-		debugFile.open("PixelArrayDebug.txt", ofstream::app );
+		debugFile.open("PixelArrayDebug.txt", ofstream::out | ofstream::trunc);
 		ofstream::iostate curState = debugFile.rdstate();
 		cout << "DebugState: " << ((curState==ofstream::goodbit)?"good":"bad") << endl;
 		cout << "File Opened: " << (debugFile.is_open() ? "open" : "closed") << endl;
@@ -143,21 +143,26 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 			int pixel = width * y + x;
 			int bytePos = rowOffset + x * 3;
 			Pixel tempPix = hexPixels[pixel];
-			cout << "Pixel " << flush << hex << (int)tempPix.r 
-				<< hex << (int)tempPix.g
+			cout << "Pixel " << flush 
+				<< hex << (int)tempPix.r << " "
+				<< hex << (int)tempPix.g << " "
 				<< hex << (int)tempPix.b << endl;
 			bmp[bytePos + 0] = tempPix.b;
 			bmp[bytePos + 1] = tempPix.g;
 			bmp[bytePos + 2] = tempPix.r;
 			if (debugFile.is_open()) {
-				cout << "Debug file open." << endl;
-				const char* i = new char('a');
-				debugFile.write(i/*(const char*)tempPix.b*/, sizeof(char));
-				debugFile.write(i/*(const char*)tempPix.g*/, sizeof(char));
-				debugFile.write(i/*(const char*)tempPix.r*/, sizeof(char));
+				char* b = makeHex(tempPix.b);
+				char* g = makeHex(tempPix.g);
+				char* r = makeHex(tempPix.r);
+				cout << "Debug file open." << *b << *g << *r << endl;
+				debugFile.write(b, sizeof(char)*2);
+				debugFile.write(g, sizeof(char)*2);
+				debugFile.write(r, sizeof(char)*2);
+				delete b; delete g; delete r;
 			}
 			
 		}
+		cout << "Padding needed: " << padding << endl; 
 		for (int p = 0; p < padding; p++) {
 			bmp[rowOffset + width * 3 + p] = 0x00;
 			if (debugFile.is_open()) { debugFile.write("00", sizeof(char)); }
@@ -405,5 +410,53 @@ string BitMapImage::Pixel::toString()
 	ret += ", " + to_string(g);
 	ret += ", " + to_string(b);
 	ret += ")";
+	return ret;
+}
+
+char* BitMapImage::makeHex(unsigned char hx) {
+	unsigned char left = hx << 4;
+	unsigned char right = hx >> 4;
+
+	char* ret = new char[3];
+	ret[0] = '?'; ret[1] = '?'; ret[2] = '\0';
+	
+	switch (left) {
+		case 0x00: ret[0] = '0'; break;
+		case 0x10: ret[0] = '1'; break;
+		case 0x20: ret[0] = '2'; break;
+		case 0x30: ret[0] = '3'; break;
+		case 0x40: ret[0] = '4'; break;
+		case 0x50: ret[0] = '5'; break;
+		case 0x60: ret[0] = '6'; break;
+		case 0x70: ret[0] = '7'; break;
+		case 0x80: ret[0] = '8'; break;
+		case 0x90: ret[0] = '9'; break;
+		case 0xa0: ret[0] = 'A'; break;
+		case 0xb0: ret[0] = 'B'; break;
+		case 0xc0: ret[0] = 'C'; break;
+		case 0xd0: ret[0] = 'D'; break;
+		case 0xe0: ret[0] = 'E'; break;
+		case 0xf0: ret[0] = 'F'; break;
+	}
+	switch (right) {
+		case 0x00: ret[1] = '0'; break;
+		case 0x01: ret[1] = '1'; break;
+		case 0x02: ret[1] = '2'; break;
+		case 0x03: ret[1] = '3'; break;
+		case 0x04: ret[1] = '4'; break;
+		case 0x05: ret[1] = '5'; break;
+		case 0x06: ret[1] = '6'; break;
+		case 0x07: ret[1] = '7'; break;
+		case 0x08: ret[1] = '8'; break;
+		case 0x09: ret[1] = '9'; break;
+		case 0x0a: ret[1] = 'A'; break;
+		case 0x0b: ret[1] = 'B'; break;
+		case 0x0c: ret[1] = 'C'; break;
+		case 0x0d: ret[1] = 'D'; break;
+		case 0x0e: ret[1] = 'E'; break;
+		case 0x0f: ret[1] = 'F'; break;
+	}
+	cout << "Make Hex: " << ret << endl;
+
 	return ret;
 }

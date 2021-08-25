@@ -41,6 +41,8 @@ private:
 	// Convert the input string to a char representing the hex value.
 	unsigned char getHex(std::string input);
 
+	char* makeHex(unsigned char hex);
+
 	// Calculate the size of the file, then write that value to the correct position in the vector.
 	void setFileSize(std::vector<unsigned char>& bmp);
 
