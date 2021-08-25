@@ -151,9 +151,10 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 			bmp[bytePos + 2] = tempPix.r;
 			if (debugFile.is_open()) {
 				cout << "Debug file open." << endl;
-				debugFile.write((const char*)tempPix.b,sizeof(char));
-				debugFile.write((const char*)tempPix.g, sizeof(char));
-				debugFile.write((const char*)tempPix.r, sizeof(char));
+				const char* i = new char('a');
+				debugFile.write(i/*(const char*)tempPix.b*/, sizeof(char));
+				debugFile.write(i/*(const char*)tempPix.g*/, sizeof(char));
+				debugFile.write(i/*(const char*)tempPix.r*/, sizeof(char));
 			}
 			
 		}
@@ -281,6 +282,7 @@ void BitMapImage::setFileColorsUsed(std::vector<unsigned char>& bmp)
 
 void BitMapImage::setColorArraySizeBytes()
 {
+	hexPixels.clear();
 	cout << "setColorArraySizeBytes: Start Populating hexPixels" << endl;
 	for (int i = 0; i < originalPixels.size(); i++) {
 		cout << "setColorArraySizeBytes: Adding " << originalPixels[i].toString() << " to hexPixels" << endl;
@@ -290,7 +292,6 @@ void BitMapImage::setColorArraySizeBytes()
 	setImageWidth();
 	setImagePadding();
 	int spare = width * width - hexPixels.size();
-	hexPixels.clear();
 	
 	
 	for (int i = 0; i < spare; i++) {
