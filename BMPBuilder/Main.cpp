@@ -11,12 +11,13 @@ int main() {
 
     test.addColor("ff0000"); test.addColor("00ff00"); test.addColor("0000ff");
     test.addColor("ffff00"); test.addColor("ff00ff"); test.addColor("00ffff");
-    test.addColor("ffff00"); test.addColor("ff00ff"); test.addColor("00ffff");
-    test.WriteToFile("test5.bmp");
+    test.addColor("000000"); test.addColor("aaaaaa"); test.addColor("ffffff");
+    test.WriteToFile("test5.bmp", "debugFile.txt");
      return 0;
 }
 
 void writeTestFile() {
+    // This is hardcoded hex for a simple bmp.
     unsigned char array[70] = { 
         0x42, 0x4D, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00,   0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 
         0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00,   0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,

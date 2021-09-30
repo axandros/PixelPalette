@@ -6,7 +6,7 @@ class BitMapImage
 {
 public:
 	// Make a bmp file.  No extensions are added to the file name.
-	void WriteToFile(std::string fileToWrite);
+	void WriteToFile(std::string fileToWrite, std::string debugFile = "");
 
 	// Add the string Hex Code to the image.  Must be exactly 6 characters long, RGB values.  Returns false if string cannot be properly parsed.
 	bool addColor(std::string hexCode);
@@ -30,14 +30,15 @@ private:
 	bool addColor(std::string hexCode, std::vector<BitMapImage::Pixel>& pixelArray);
 
 	// Write the general file header to the supplied vector
-	void makeFileHeader(std::vector<unsigned char>& bmp);
+	void makeFileHeader(std::vector<unsigned char>& bmp, std::ofstream& debugFile);
 	// Write the DIB Header to the supplied vecotr
-	void makeDIBHeader(std::vector<unsigned char>& bmp);
+	void makeDIBHeader(std::vector<unsigned char>& bmp, std::ofstream& debugFile);
 	// Generate the array of pixels for the bmp image and add them into the input vector.
-	void addPixelArray(std::vector<unsigned char>& bmp, bool debug = false);
+	void addPixelArray(std::vector<unsigned char>& bmp, std::ofstream& debugFile);
+
+
 	// convert the input string to a char representing the hex value.  Returns false if the string cannot be parsed.
 	bool getHex(std::string input, unsigned char& output);
-
 	// Convert the input string to a char representing the hex value.
 	unsigned char getHex(std::string input);
 

@@ -1,19 +1,28 @@
 #include "BitMapImage.h"
 #include <vector>
+using std::vector;
 #include <string>
+using std::string;
 #include <fstream>
+using std::ofstream;
 
 #include <iostream>
+using std::cout; using std::endl;
+using std::dec; using std::hex;
 
-using namespace std;
-
-void BitMapImage::WriteToFile(std::string fileToWrite)
+void BitMapImage::WriteToFile(string fileToWrite, string dFile)
 {
+	ofstream debugFile;
+	if (dFile != "") {
+		cout << "opening Debug File" << endl;
+		debugFile.open(dFile.c_str(), ofstream::out | ofstream::trunc);
+	}
+	
 	vector<unsigned char> fileBytes;
 
-	addPixelArray(fileBytes, true);
-	makeFileHeader(fileBytes);
-	makeDIBHeader(fileBytes);
+	addPixelArray(fileBytes, debugFile);
+	makeFileHeader(fileBytes, debugFile);
+	makeDIBHeader(fileBytes, debugFile);
 	setFileSize(fileBytes);
 
 	cout << "BMP Size: " << dec << fileBytes.size() << endl;
@@ -23,9 +32,13 @@ void BitMapImage::WriteToFile(std::string fileToWrite)
 	
 	if (file.is_open()) {
 		//cout << dec << "Hex: " << 51 << "Dec: " << 0x51 ;
-		file.write((char*)&fileBytes[0], fileBytes.size() * sizeof(char));
+		//file.write((char*)&fileBytes[0], fileBytes.size() * sizeof(char));
 		for (int i = 0; i < fileBytes.size(); i++) {
-			file.write((char*)&fileBytes[i], sizeof(char));
+			if (debugFile) {
+				string hex = makeHex(fileBytes[i]);
+				debugFile.write(hex.c_str(), sizeof(char) * hex.length());
+			}
+			//file.write((char*)&fileBytes[i], sizeof(char));
 			file.write((char*)&fileBytes[i], sizeof(char));
 			//cout << dec << i << ": " << hex << (int)fileBytes[i] << endl;
 		}
@@ -62,7 +75,7 @@ bool BitMapImage::addColor(std::string hexCode, std::vector<BitMapImage::Pixel>&
 	return ret;
 }
 
-void BitMapImage::makeFileHeader(vector<unsigned char>& bmp)
+void BitMapImage::makeFileHeader(vector<unsigned char>& bmp, std::ofstream& debugFile)
 {
 	// BM - indicates bitmap file.
 	bmp[0] = 0x42;
@@ -80,7 +93,7 @@ void BitMapImage::makeFileHeader(vector<unsigned char>& bmp)
 	return;
 }
 
-void BitMapImage::makeDIBHeader(std::vector<unsigned char>& bmp)
+void BitMapImage::makeDIBHeader(std::vector<unsigned char>& bmp, std::ofstream& debugFile)
 {
 	// Size of the header
 	bmp[14] = 0x28; bmp[15] = 0x00; bmp[16] = 0x00; bmp[17] = 0x00;
@@ -109,7 +122,7 @@ void BitMapImage::makeDIBHeader(std::vector<unsigned char>& bmp)
 	bmp[50] = 0x00; bmp[51] = 0x00; bmp[52] = 0x00; bmp[53] = 0x00;
 }
 
-void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
+void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, std::ofstream& debugFile)
 {
 	// BGR  - Its reversed from normal R-G-B
 	
@@ -121,9 +134,7 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 	
 	int bytesPerRow = width * 3 + padding;
 
-	std::ofstream debugFile;
-	if (debug) {
-		cout << "opening debug file." << endl;
+	if (debugFile.is_open()) {
 		debugFile.open("PixelArrayDebug.txt", ofstream::out | ofstream::trunc);
 		ofstream::iostate curState = debugFile.rdstate();
 		cout << "DebugState: " << ((curState==ofstream::goodbit)?"good":"bad") << endl;
@@ -143,7 +154,7 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, bool debug)
 			int pixel = width * y + x;
 			int bytePos = rowOffset + x * 3;
 			Pixel tempPix = hexPixels[pixel];
-			cout << "Pixel " << flush 
+			cout << "Pixel " << std::flush 
 				<< hex << (int)tempPix.r << " "
 				<< hex << (int)tempPix.g << " "
 				<< hex << (int)tempPix.b << endl;
@@ -205,7 +216,7 @@ unsigned char BitMapImage::getHex(string input) {
 
 void BitMapImage::setFileSize(vector<unsigned char>& bmp)
 {
-	int totalSizeBytes = colorBytes + 54;
+	int totalSizeBytes = colorBytes + 54; // 54 : Size of header.
 	unsigned char byte1, byte2, byte3, byte4 = 0x00;
 
 	int byte4Size = 256*256*256;
@@ -406,9 +417,9 @@ bool BitMapImage::getHex(string input, unsigned char& output)
 
 string BitMapImage::Pixel::toString()
 {
-	string ret = "(" + to_string(r);
-	ret += ", " + to_string(g);
-	ret += ", " + to_string(b);
+	string ret = "(" + std::to_string(r);
+	ret += ", " + std::to_string(g);
+	ret += ", " + std::to_string(b);
 	ret += ")";
 	return ret;
 }
