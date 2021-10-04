@@ -144,6 +144,7 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, std::ofstream& 
 	cout << "ColorBytes: " << colorBytes << endl;
 	cout << "BytesPerRow: " << bytesPerRow << endl;
 	cout << "Width: " << width << endl;
+	cout << "bmp length: " << bmp.size() << endl;
 	
 	for (int y = 0; y < width; y++) {
 		cout << "Row: " << y << endl;
@@ -154,12 +155,17 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, std::ofstream& 
 			int pixel = width * y + x;
 			int bytePos = rowOffset + x * 3;
 			Pixel tempPix = hexPixels[pixel];
-			cout << "Pixel " << std::flush 
+			/*cout << "Pixel " << std::flush 
 				<< hex << (int)tempPix.r << " "
 				<< hex << (int)tempPix.g << " "
 				<< hex << (int)tempPix.b << endl;
+				*/
+
+			cout << "Byte: " << bytePos << std::flush;
 			bmp[bytePos + 0] = tempPix.b;
+			cout << " " << (bytePos+1) << std::flush;
 			bmp[bytePos + 1] = tempPix.g;
+			cout << " " << (bytePos+2) << std::flush;
 			bmp[bytePos + 2] = tempPix.r;
 			if (debugFile.is_open()) {
 				char* b = makeHex(tempPix.b);
@@ -178,27 +184,16 @@ void BitMapImage::addPixelArray(std::vector<unsigned char>& bmp, std::ofstream& 
 			bmp[rowOffset + width * 3 + p] = 0x00;
 			if (debugFile.is_open()) { debugFile.write("00", sizeof(char)); }
 		}
+
+		// End of Line black pixel.
+		int bytePos = rowOffset + width * 3;
+		cout << "====EOL Pixel byte: " << (bytePos) << std::flush;
+		bmp[bytePos + 0] = 0x00;
+		cout << " " << (bytePos + 1) << std::flush;
+		bmp[bytePos + 1] = 0x00;
+		cout << " " << (bytePos + 2) << std::flush;
+		bmp[bytePos + 2] = 0x00;
 	}
-
-	// Fill the spare spaces.
-
-	// Line 1
-	//bmp[54] = 0x00; bmp[55] = 0xff; bmp[56] = 0x00;
-	//bmp[57] = 0x00; bmp[58] = 0xff; bmp[59] = 0x00;
-	//bmp[54] = getHex("00"); bmp[55] = getHex("ff"); bmp[56] = getHex("00");
-	//bmp[57] = getHex("ff"); bmp[58] = getHex("ff"); bmp[59] = getHex("ff");
-	
-	// Padding for line one to make the number of pixels divisible by 4
-	//bmp[60] = 0x00; bmp[61] = 0x00;
-
-	// Line 2
-	//bmp[62] = 0x00; bmp[63] = 0x00; bmp[64] = 0xff;
-	//bmp[65] = 0x00; bmp[66] = 0x00; bmp[67] = 0x00;
-	//bmp[62] = getHex("aa"); bmp[63] = getHex("00"); bmp[64] = getHex("ff");
-	//bmp[65] = getHex("00"); bmp[66] = getHex("FF"); bmp[67] = getHex("ff");
-	
-	// Padding for line one to make the number of pixels divisible by 4
-	//bmp[68] = 0x00; bmp[69] = 0x00;
 
 	if (debugFile.is_open()) { 
 		debugFile.close();
@@ -313,7 +308,8 @@ void BitMapImage::setColorArraySizeBytes()
 	for (int i = 0; i < spare; i++) {
 		addColor("ffffff", hexPixels);
 	}
-	colorBytes = hexPixels.size() * 3 + width * padding;
+
+	colorBytes = (width+1) * width * 3;	// The black pixel adds 1 to width, but height is what width was!
 }
 
 void BitMapImage::setImageWidth()
